@@ -11,20 +11,26 @@ http.listen(3000, () => {
     console.log(`listening on *:${3000}`);
 });
 
-io.on("connection", (socket) => {
+io.on("connection", (socket:any) => {
     console.log('a user connected');
-    io.emit('consoleContent', (processor.currentContent).slice(30));
-    console.log(processor.currentContent);
+    let out_to_client = processor.currentContent;
+    io.emit('consoleContent', out_to_client.slice(-80));
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });
 });
 
-app.get('/', (req, res) => {
+io.on('sendConsoleCommand', (args: string) => {
+    processor.sendCommand(args);
+});
+
+app.get('/', (req:any, res:any) => {
     res.sendFile(path.resolve('public/console.html'));
 });
 
-export const ConsoleSender = (message) => io.emit('consoleContent', message);
+export const ConsoleSender = (message:string[]) => {
+    io.emit('consoleContent', message.slice(-80));
+};
 
 processor.startServer();
 
