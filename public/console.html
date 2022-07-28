@@ -28,7 +28,7 @@
         border-top: 2px dotted gray;
         border-bottom: 2px dotted gray;
     }
-    button[type="button"] {
+    button {
         border: 3px solid gray;
         background-color: gray;
         color: white;
@@ -75,9 +75,15 @@
 </head>
 <body>
     <div class="p-3">
-        <div class="row">
+        <div style="margin-bottom: 10px;" class="row">
             <h4><i class="fas fa-solid fa-terminal"></i> Server Terminal</h4>
             <p>Developed by: Rab Károly | <a href="https://github.com/kareszrk" target="_blank"><i class="fa-brands fa-github"></i> https://github.com/kareszrk</a></p>
+            <div class="col-md-2">
+                <button class="btn btn-success" id="startBtn" type="button">Start</button>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-danger" id="killBtn" type="button">Stop</button>
+            </div>
         </div>
         <div class="row consoleBg">
             <div onselectstart="return false" ondragstart="return false" id="overlay">
@@ -85,17 +91,19 @@
               </div>
             <div id="consoleContent" class="col-md-12"></div>
         </div>
+        <form id="sendCommandForm">
         <div style="padding-top: 10px;" class="row">
             <div class="col-md-8">
-                <input type="text" id="command" />
+                <input type="text" placeholder="You can type here" id="command" />
             </div>
             <div class="col-md-2">
-                <button class="btn btn-success" id="sendBtn" type="button">Send</button>
+                <button class="btn btn-primary" id="sendBtn" type="submit">Send</button>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-success" id="AutoScrollBtn" type="button">Disable scroll</button>
+                <button class="btn btn-secondary" id="AutoScrollBtn" type="button">Disable scroll</button>
             </div>
         </div>
+    </form>
     </div>
 </body>
 <script type="module">
@@ -126,6 +134,27 @@
         args.forEach(element => output += element);
         editor.getDoc().setValue(output);
     });
+    socket.on("state", (state) => {
+        if(state == "already") {
+            alert("The service already running");
+        } else if(state == "not-running") {
+            alert("The service is not runing");
+        };
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("startBtn").textContent = "Start";
+        document.getElementById("killBtn").disabled = false;
+        document.getElementById("killBtn").textContent = "Stop";
+    });
+    document.getElementById("startBtn").addEventListener('click', () => {
+        socket.emit('startServer');
+        document.getElementById("startBtn").disabled = true;
+        document.getElementById("startBtn").textContent = "Starting...";
+    })
+    document.getElementById("killBtn").addEventListener('click', () => {
+        socket.emit('killServer');
+        document.getElementById("killBtn").disabled = true;
+        document.getElementById("killBtn").textContent = "Stopping...";
+    })
 
     document.getElementById("AutoScrollBtn").addEventListener('click', () => {
         if(autoScroll) {
@@ -140,9 +169,10 @@
         }
     });
 
-    document.getElementById("sendBtn").addEventListener('click', () => {
-        alert("clicked");
-        socket.io.emit("sendConsoleCommand", document.getElementById("command").value);
+    document.getElementById("sendCommandForm").addEventListener('submit', (e) => {
+        e.preventDefault();
+        socket.emit("sendConsoleCommand", document.getElementById("command").value);
+        document.getElementById("command").value = "";
     });
   </script>
 </html>
